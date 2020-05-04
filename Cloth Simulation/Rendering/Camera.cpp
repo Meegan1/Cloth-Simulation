@@ -4,6 +4,9 @@
 
 #include "Camera.h"
 #include <glm/gtx/quaternion.hpp>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 
 Camera::Camera() : position(0.0f, 0.0f, 3.0f), pitch(0), yaw(0) {
     updateViewMatrix();

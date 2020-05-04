@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QBoxLayout>
 #include <QFileDialog>
+#include <QSlider>
 #include "Rendering/Engine.h"
 
 class MediaWidget : public QWidget {
@@ -66,7 +67,6 @@ private slots:
         dialog.setNameFilter(tr("*.bvh"));
         dialog.setFileMode(QFileDialog::AnyFile);
         if(dialog.exec()) {
-            engine->bvh.Save(dialog.selectedFiles().first().toStdString().c_str());
         }
     }
 
@@ -88,7 +88,6 @@ private slots:
         QFileDialog dialog(this);
         dialog.setFileMode(QFileDialog::ExistingFile);
         if(dialog.exec()) {
-            engine->loadBVH(dialog.selectedFiles().first().toStdString().c_str());
         }
     }
 
@@ -98,7 +97,6 @@ private slots:
     }
 
     void valueChanged(int value) {
-        this->engine->setFrame((value * this->engine->bvh.num_frame) / 100);
     }
 };
 #endif //ASSIGNMENT_1_MEDIAWIDGET_H

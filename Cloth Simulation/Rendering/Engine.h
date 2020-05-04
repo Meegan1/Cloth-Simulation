@@ -18,17 +18,20 @@
 #include "Input.h"
 #include "../Animation/BVH.h"
 #include "GL/freeglut.h"
+#include "../GObject.h"
+#include "MassSpring.h"
 #include <glm/mat4x2.hpp>
 
 
 
 // physics fixed timestep
-#define DELTA_TIME 0.01f
+#define DELTA_TIME 0.001f
 
 class Engine : public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT
 public:
-	BVH bvh;
+    Ball sphere;
+    MassSpring massSpring;
 
     explicit Engine(QWidget *parent);
 
@@ -80,19 +83,17 @@ protected:
      */
     QTimer timer;
     QElapsedTimer elapsed_timer;
-    GLfloat delta_accumulator;
+    GLfloat delta_accumulator{0.0f};
     Camera camera;
     Input input;
     QPoint last_m_pos;
     bool is_editing = false;
     bool is_playing = true;
     float frame = 0;
-	int prev_frame = -1;
 	glm::vec2 window_size;
 	GLubyte* pixels;
 	glm::mat4 target_position;
-	BVH::Joint* selected_joint;
-	
+
 private:
 };
 

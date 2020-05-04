@@ -6,16 +6,14 @@
 #include "../Animation/BVH.h"
 #include "../Video.h"
 #include <QThread>
+#include <QOpenGLShaderProgram>
 
-Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({0, 4, 10}), bvh("../arms_up_test.bvh") {
+Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({5, 4, 20}), massSpring(20, 20, 1.0f) {
     setWindowTitle("Animation Viewer");
 }
 
 void Engine::selectJoint(BVH::Joint* joint)
 {
-	selected_joint = joint;
-
-	target_position = bvh.getPosition(joint, frame, 1.0f);
 }
 
 void Engine::initializeGL() {
@@ -30,6 +28,10 @@ void Engine::initializeGL() {
 
     // set background colour to purple
     glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
+
+    sphere.init(5.0f);
+    sphere.position = glm::vec3(5.0f, -5.0f, 5.0f);
+    massSpring.addBall(&sphere);
 
     startLoop(); // start game loop
 }
@@ -52,12 +54,21 @@ void Engine::loop() {
     camera.update();
 
     if(is_playing) {
-        frame += frame_time / bvh.interval;
-        if(frame >= bvh.num_frame)
-            frame = 0;
 
-        emit frameChanged((100 * frame)/bvh.num_frame);
-        target_position = bvh.getPosition(selected_joint, frame, 1.0f);
+        // integrate in steps
+        while (delta_accumulator >= DELTA_TIME) {
+            massSpring.update(DELTA_TIME, 1.0f);
+
+            delta_accumulator -= DELTA_TIME;
+        }
+
+        // catch remainder in accumulator and integrate
+        if(delta_accumulator >= 0.0f) {
+            massSpring.update(delta_accumulator, 1.0f);
+
+            delta_accumulator = 0.0f;
+        }
+
     }
 
 	// if ((int) frame != prev_frame) {
@@ -65,9 +76,6 @@ void Engine::loop() {
 	// 	Video::create_ppm("tmp", frame, window_size.x, window_size.y, 255, 4, pixels);
 	// }
 
-	if(is_editing) {
-	    bvh.executeIK(getTargetPosition(), selected_joint, frame);
-    }
 
     if(input.keyboard.KEY_W)
         camera.zoom(frame_time * 5);
@@ -91,7 +99,7 @@ void Engine::resizeGL(int w, int h) {
     // set projection matrix to glFrustum based on window size
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-aspectRatio, aspectRatio, -1.0, 1.0, 1, 100.0);
+    gluPerspective(90.0f, aspectRatio, 0.1f, 100.0);
 
 	window_size = { w, h };
 
@@ -103,6 +111,10 @@ void Engine::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // enable lighting
     glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
 
     // set model view matrix
     glMatrixMode(GL_MODELVIEW);
@@ -114,22 +126,17 @@ void Engine::paintGL() {
      * Draw objects
      */
 
-    bvh.RenderFigure(frame, 1.0f);
+    sphere.render();
 
-	glPushMatrix();
-		glPushAttrib(GL_CURRENT_BIT);
-		    if(is_editing)
-			    glColor3f(1, 0, 0);
-            else
-                glColor3f(0, 0, 1);
-			glMultMatrixf(&target_position[0][0]);
-//			glTranslatef(getTargetPosition().x(), getTargetPosition().y(), getTargetPosition().z());
-			gluSphere(gluNewQuadric(), 0.3, 10, 10);
-		glPopAttrib();
-	glPopMatrix();
+
+    massSpring.render();
+
 
     GLfloat lightPos[] = {0, 30.0f, -10.0f, 0};
+    GLfloat lightColor[] = {1.0f, 1.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightColor);
 
 
 	glReadPixels(0, 0, window_size.x, window_size.y, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
@@ -222,23 +229,6 @@ void Engine::toggleEdit() {
 
 bool Engine::isEditing() {
     return this->is_editing;
-}
-
-void Engine::loadBVH(const char* file) {
-    // pause animation
-    this->is_playing = false;
-    this->is_playing = false;
-    emit playChanged(isPlaying());
-    emit editChanged(isEditing());
-
-    // set frame to 0
-    this->frame = 0;
-    emit frameChanged(0);
-
-    // set to new animation
-    this->bvh.Clear();
-    this->bvh.Load(file);
-    this->selected_joint = bvh.joints[0];
 }
 
 void Engine::setFrame(int frame) {
