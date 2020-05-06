@@ -34,24 +34,15 @@ void Spring::render() {
     glEnd();
 }
 
-glm::vec3 Spring::getForce(PointMass *mass, float scale) {
-    if (mass != m1 && mass != m2) {
-        return glm::vec3(0, 0, 0);
-    }
-
-    // spring force
+glm::vec3 Spring::getForce(PointMass *point, float scale) {
+    // calculate force scalar
     float dist = glm::distance(m1->position, m2->position);
     float scalar = 100.0f * spring_constant * (dist - rest_length);
     glm::vec3 dir = glm::normalize(m2->position - m1->position);
 
-    // find speed of contraction/expansion for damping force
-    float s1 = glm::dot(m1->velocity, dir);
-    float s2 = glm::dot(m2->velocity, dir);
-    float dampingScalar = -damping_constant * (s1 + s2);
+    // calculate damping scalar
+    float damping_scalar = -damping_constant * glm::dot(m2->velocity + m1->velocity, dir);
 
-    if (mass == m1) {
-        return (scalar + dampingScalar) * dir;
-    } else {
-        return (-scalar + dampingScalar) * dir;
-    }
+    float sign = point == m1 ? 1 : -1;
+    return (sign * scalar + damping_scalar) * dir;
 }

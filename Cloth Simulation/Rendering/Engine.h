@@ -25,7 +25,7 @@
 
 
 // physics fixed timestep
-#define DELTA_TIME 0.001f
+#define DELTA_TIME 0.01f
 
 class Engine : public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT

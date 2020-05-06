@@ -21,7 +21,7 @@ public:
 
     void render();
 
-    glm::vec3 getForce(PointMass *mass, float scale);
+    glm::vec3 getForce(PointMass *point, float scale);
 
     float spring_constant;
     float damping_constant{1.0f};

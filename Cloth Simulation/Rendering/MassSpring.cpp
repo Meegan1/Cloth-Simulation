@@ -88,6 +88,7 @@ void MassSpring::render() {
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
             for(unsigned long face = 0; face < faces.size() / 3; face++) {
+                glNormal3f(1.0f, 1.0f, -1.0f);
                 glVertex3fv(&(faces[face * 3]->position.x));
                 glVertex3fv(&(faces[face * 3 + 1]->position.x));
                 glVertex3fv(&(faces[face * 3 + 2]->position.x));

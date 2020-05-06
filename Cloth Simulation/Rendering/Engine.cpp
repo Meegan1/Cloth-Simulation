@@ -114,7 +114,7 @@ void Engine::paintGL() {
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
+    glColorMaterial(GL_FRONT, GL_SPECULAR);
 
     // set model view matrix
     glMatrixMode(GL_MODELVIEW);
@@ -132,7 +132,7 @@ void Engine::paintGL() {
     massSpring.render();
 
 
-    GLfloat lightPos[] = {0, 30.0f, -10.0f, 0};
+    GLfloat lightPos[] = {5.0f, 4.0f, 20.0f};
     GLfloat lightColor[] = {1.0f, 1.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
