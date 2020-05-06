@@ -10,7 +10,7 @@ MassSpring::MassSpring(const unsigned long width, const unsigned long height, fl
 
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-            grid[i][j] = addPoint(PointMass(glm::vec3(i, 0.0f, j), 1.0f)).get();
+            grid[i][j] = addPoint(PointMass(glm::vec3(i * scale, 0.0f, j * scale), 1.0f)).get();
         }
     }
 
@@ -25,19 +25,19 @@ MassSpring::MassSpring(const unsigned long width, const unsigned long height, fl
 
     for (int i = 0; i < width - 1; i++) {
         for (int j = 0; j < height - 1; j++) {
-            addSpring(Spring(1.0f, 1.0f, grid[i][j], grid[i+1][j]));
-            addSpring(Spring(1.0f, 1.0f, grid[i][j], grid[i][j+1]));
-            addSpring(Spring(1.0f, 1.3f, grid[i][j], grid[i+1][j+1]));
-            addSpring(Spring(1.0f, 1.3f, grid[i+1][j], grid[i][j+1]));
+            addSpring(Spring(1.0f, scale, grid[i][j], grid[i+1][j]));
+            addSpring(Spring(1.0f, scale, grid[i][j], grid[i][j+1]));
+            addSpring(Spring(1.0f, scale * 1.4f, grid[i][j], grid[i+1][j+1]));
+            addSpring(Spring(1.0f, scale * 1.4f, grid[i+1][j], grid[i][j+1]));
         }
     }
 
     for(int i = 0; i < width - 1; i++) {
-        addSpring(Spring(1.0f, 1.0f, grid[i][height - 1], grid[i + 1][height - 1]));
+        addSpring(Spring(1.0f, scale, grid[i][height - 1], grid[i + 1][height - 1]));
     }
 
     for(int j = 0; j < height - 1; j++) {
-        addSpring(Spring(1.0f, 1.0f, grid[width - 1][j], grid[width - 1][j + 1]));
+        addSpring(Spring(1.0f, scale, grid[width - 1][j], grid[width - 1][j + 1]));
     }
 
 }
@@ -63,8 +63,8 @@ void MassSpring::update(float dt, float scale) {
         // resolve ball collision
         for(auto &ball : balls) {
             float d = glm::distance(point->position, ball->position);
-            if(d <= ball->getRadius() * 1.04f) {
-                glm::vec3 resolve = glm::normalize(point->position - ball->position) * ball->getRadius() * 1.04f;
+            if(d <= ball->getRadius() * 1.02f) {
+                glm::vec3 resolve = glm::normalize(point->position - ball->position) * ball->getRadius() * 1.02f;
                 point->position = ball->position + resolve;
                 point->setIsFixed(true);
             }
@@ -88,7 +88,7 @@ void MassSpring::render() {
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
             for(unsigned long face = 0; face < faces.size() / 3; face++) {
-                glNormal3f(1.0f, 1.0f, -1.0f);
+//                glNormal3f(1.0f, 1.0f, -1.0f);
                 glVertex3fv(&(faces[face * 3]->position.x));
                 glVertex3fv(&(faces[face * 3 + 1]->position.x));
                 glVertex3fv(&(faces[face * 3 + 2]->position.x));

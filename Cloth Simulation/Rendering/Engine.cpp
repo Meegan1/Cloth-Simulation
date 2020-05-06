@@ -8,7 +8,7 @@
 #include <QThread>
 #include <QOpenGLShaderProgram>
 
-Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({5, 4, 20}), massSpring(20, 20, 1.0f) {
+Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({5, 4, 20}), massSpring(50, 50, 0.3f) {
     setWindowTitle("Animation Viewer");
 }
 

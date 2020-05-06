@@ -35,14 +35,19 @@ void Spring::render() {
 }
 
 glm::vec3 Spring::getForce(PointMass *point, float scale) {
+    float sign = point == m1 ? -1 : 1;
+
     // calculate force scalar
-    float dist = glm::distance(m1->position, m2->position);
-    float scalar = 100.0f * spring_constant * (dist - rest_length);
+    float dist = glm::distance(m2->position, m1->position);
+    float linear_spring = -spring_constant * (dist - rest_length) * 100.0f;
+
+    // calculate direction vector
     glm::vec3 dir = glm::normalize(m2->position - m1->position);
 
     // calculate damping scalar
-    float damping_scalar = -damping_constant * glm::dot(m2->velocity + m1->velocity, dir);
+    float s1 = glm::dot(m1->velocity, dir);
+    float s2 = glm::dot(m2->velocity, dir);
+    float damper = -damping_constant * s2 - s1;
 
-    float sign = point == m1 ? 1 : -1;
-    return (sign * scalar + damping_scalar) * dir;
+    return (sign * linear_spring + damper) * dir;
 }
