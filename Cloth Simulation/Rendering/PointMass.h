@@ -13,10 +13,13 @@
 class PointMass {
 public:
     PointMass(glm::vec3 position, float mass);
+	PointMass();
 
     glm::vec3 position;
 
     void setPosition(const glm::vec3 &position);
+
+	void setForce(const glm::vec3& force);
 
     void setIsFixed(bool isFixed);
 
@@ -30,6 +33,7 @@ public:
 
     void render();
 
+	glm::vec3 force{ 0 };
     glm::vec3 velocity{0};
     glm::vec3 acceleration{0};
     bool is_fixed{false};

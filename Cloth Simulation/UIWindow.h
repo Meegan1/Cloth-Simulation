@@ -1,14 +1,8 @@
 #pragma once
 
-#include <QVBoxLayout>
-#include <QPushButton>
 #include <QListWidget>
-#include "QTreeWidget"
-#include "Animation/BVH.h"
 #include "Rendering/Engine.h"
-#include "QWindow"
 #include "MediaWidget.h"
-
 
 class UIWindow : public QWidget
 {
@@ -34,8 +28,5 @@ public:
         layout->addWidget(media);
 
     }
-
-
-public slots:
 };
 

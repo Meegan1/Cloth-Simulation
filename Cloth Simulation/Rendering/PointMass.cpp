@@ -2,15 +2,23 @@
 // Created by Jake Meegan on 03/05/2020.
 //
 
-#include <gl.h>
+#include <QOpenGLFunctions>
 #include "PointMass.h"
 
 PointMass::PointMass(glm::vec3 position, float mass) : mass(mass), position(position) {
 
 }
 
+PointMass::PointMass()
+{
+}
+
 void PointMass::setPosition(const glm::vec3 &position) {
     this->position = position;
+}
+
+void PointMass::setForce(const glm::vec3& force) {
+	this->force = force;
 }
 
 void PointMass::setIsFixed(bool isFixed) {
@@ -32,7 +40,9 @@ glm::vec3 PointMass::calculateAcceleration() {
 
     // add gravity
     acceleration += glm::vec3(0, -9.8f, 0) * mass;
-//    acceleration += glm::vec3(10.0f, 0.0f, 0.0f);
+
+	// add forces
+	acceleration += force;
 
     // calculate forces from attached springs
     for(auto &spring : springs) {

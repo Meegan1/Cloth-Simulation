@@ -17,7 +17,7 @@ public:
 
     void init(float radius) {
         this->radius = radius;
-        obj.init("../models/sphere.obj", radius);
+        obj.init("models/sphere.obj", radius);
     }
 
     void render() {
@@ -47,6 +47,8 @@ public:
 
     void update(float dt);
     void render(bool showFaces, bool showSprings, bool showPoints);
+
+	void save(std::string objFile);
 
     std::vector<std::shared_ptr<Spring>> springs;
     std::vector<std::shared_ptr<PointMass>> points;

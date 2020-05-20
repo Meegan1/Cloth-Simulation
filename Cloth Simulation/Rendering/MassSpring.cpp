@@ -6,7 +6,14 @@
 
 
 MassSpring::MassSpring(const unsigned long width, const unsigned long height, float scale) : width(width), height(height) {
-    PointMass* grid[width][height];
+	/*
+	 * Create grid of point masses
+	 */
+    PointMass ***grid = new PointMass**[width];
+	for(int i = 0; i < height; i++)
+	{
+		grid[i] = new PointMass*[height];
+	}
 
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
@@ -39,7 +46,6 @@ MassSpring::MassSpring(const unsigned long width, const unsigned long height, fl
     for(int j = 0; j < height - 1; j++) {
         addSpring(Spring(1.0f, scale, grid[width - 1][j], grid[width - 1][j + 1]));
     }
-
 }
 
 std::shared_ptr<Spring> MassSpring::addSpring(const Spring &spring) {
@@ -106,6 +112,42 @@ void MassSpring::render(bool showFaces, bool showSprings, bool showPoints) {
             glPopAttrib();
         glPopMatrix();
     }
+}
+
+void MassSpring::save(std::string objFile)
+{
+	CGObject obj;
+
+	std::vector<glm::vec3> vertices;
+	for(auto &point : points)
+	{
+		vertices.push_back(point.get()->position);
+	}
+
+	std::vector<Triangle> triangles;
+	for (unsigned long face = 0; face < faces.size() / 3; face++)
+	{
+		Triangle triangle;
+
+		int i = 0;
+		for(auto &vertex : vertices)
+		{
+			if (faces[face * 3]->position == vertex)
+				triangle.x = i;
+			if (faces[face * 3 + 1]->position == vertex)
+				triangle.y = i;
+			if (faces[face * 3 + 2]->position == vertex)
+				triangle.z = i;
+
+			i++;
+		}
+
+		triangles.emplace_back(triangle);
+	}
+	
+	
+	obj.setFaceVertices(vertices, triangles);
+	obj.writeFile(objFile);
 }
 
 void MassSpring::addBall(Ball *ball) {

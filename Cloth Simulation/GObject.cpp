@@ -208,6 +208,12 @@ int CGObject::render()
 	return 0;
 }
 
+void CGObject::setFaceVertices(std::vector<glm::vec3> vertices, std::vector<Triangle> triangles)
+{
+	this->m_vertices = vertices;
+	this->m_triangles = triangles;
+}
+
 int CGObject::scale(float scale)
 {
 	if (scale <= 0 || m_vertices.empty())

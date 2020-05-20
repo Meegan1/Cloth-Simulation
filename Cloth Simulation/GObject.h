@@ -34,6 +34,8 @@ public:
     void switchShowTexture() { m_showTexture = !m_showTexture; }
     void switchShowColor() { m_showColor = !m_showColor; }
 
+	void setFaceVertices(std::vector<glm::vec3> vertices, std::vector<Triangle> triangles);
+
     int scale(float scale = 1);
 
     int normalise();

@@ -2,7 +2,7 @@
 // Created by Jake Meegan on 03/05/2020.
 //
 
-#include <gl.h>
+#include <QOpenGLFunctions>
 #include "Spring.h"
 #include "PointMass.h"
 

@@ -3,18 +3,15 @@
 //
 
 #include "Engine.h"
-#include "../Animation/BVH.h"
 #include "../Video.h"
 #include <QThread>
 #include <QOpenGLShaderProgram>
 #include <fstream>
+#include <filesystem>
+#include <QMessageBox>
 
 Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({5, 4, 20}), massSpring(50, 50, 0.3f) {
     setWindowTitle("Animation Viewer");
-}
-
-void Engine::selectJoint(BVH::Joint* joint)
-{
 }
 
 void Engine::initializeGL() {
@@ -44,7 +41,7 @@ void Engine::initializeGL() {
     glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 
     sphere.init(5.0f);
-    sphere.position = glm::vec3(5.0f, -5.0f, 5.0f);
+    sphere.position = glm::vec3(5.0f, -10.0f, 5.0f);
     massSpring.addBall(&sphere);
 
     startLoop(); // start game loop
@@ -99,7 +96,11 @@ void Engine::loop() {
 
     if((1000/FPS) - elapsed_timer.elapsed() >= 0) {
         timer.stop();
-        timer.start((1000 / (int) FPS) - elapsed_timer.elapsed());
+
+    	if(FPS == 0 || (1000 / (int)FPS) - elapsed_timer.elapsed() < 0)
+			timer.start(0);
+		else
+			timer.start((1000 / (int) FPS) - elapsed_timer.elapsed());
     }
 
     frame++;
@@ -117,8 +118,6 @@ void Engine::resizeGL(int w, int h) {
     gluPerspective(90.0f, aspectRatio, 0.1f, 100.0);
 
 	window_size = { w, h };
-
-//	pixels = static_cast<GLubyte*>(malloc(4 * window_size.x * window_size.y));
 }
 
 void Engine::paintGL() {
@@ -254,6 +253,56 @@ void Engine::togglePoints() {
     emit pointsChanged(show_points);
 }
 
+void Engine::toggleWind() {
+	if (!enable_wind) {
+		for (auto& point : massSpring.points) {
+			point->setForce(glm::vec3(0, 0, 10));
+		}
+	} else {
+		for (auto& point : massSpring.points) {
+			point->setForce(glm::vec3(0, 0, 0));
+		}
+	}
+
+	enable_wind = !enable_wind;
+
+	emit windToggled(enable_wind);
+}
+
+void Engine::toggleScenario()
+{
+	if (scenario == 2)
+	{
+		massSpring = MassSpring(50, 50, 0.3f);
+		massSpring.addBall(&sphere);
+		show_ball = true;
+
+		scenario = 1;
+	}
+	else
+	{
+		massSpring = MassSpring(10, 10, 1.0f);
+		show_ball = false;
+
+		massSpring.points.at(0)->setIsFixed(true);
+		massSpring.points.at(90)->setIsFixed(true);
+
+		this->enable_wind = false;
+		toggleWind();
+
+		scenario = 2;
+	}
+
+	emit scenarioChanged(scenario);
+}
+
+void Engine::setFrameRate(int frame_rate) {
+	this->is_playing = false;
+	emit playChanged(isPlaying());
+	
+	this->FPS = frame_rate;
+}
+
 void Engine::startRecording() {
     // clear buffer
     for(auto *pixels: frame_caps) {
@@ -267,12 +316,20 @@ void Engine::startRecording() {
 void Engine::stopRecording() {
     is_recording = false;
 
-    outputImages();
+	QMessageBox msgBox;
+	msgBox.setText("The frames will now be exported into the video folder!");
+	msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+	msgBox.setDefaultButton(QMessageBox::Ok);
+	int ret = msgBox.exec();
+
+	if(ret == QMessageBox::Ok)
+		outputImages();
 }
 
 void Engine::outputImages() {
     std::filesystem::remove_all("video"); // cleanup video folder
     std::filesystem::create_directory("video"); // create new video folder
+	
 
     int i = 0;
     for(auto *pixels : this->frame_caps) {
@@ -284,4 +341,9 @@ void Engine::outputImages() {
     std::ofstream file("video/render.sh");
     file << "ffmpeg -framerate " << FPS <<" -i \"tmp%d.ppm\" output.mp4";
     file.close();
+
+	// create readme
+	std::ofstream readme("video/readme.txt");
+	readme << "Compile all the images via ffmpeg using this command: ffmpeg -framerate " << FPS << " -i \"tmp%d.ppm\" output.mp4";
+	readme.close();
 }
