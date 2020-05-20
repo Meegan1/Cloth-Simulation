@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
     Engine engine(NULL);
     engine.resize(600, 600);
     engine.show();
-//	UIWindow uiWindow(&engine);
+	UIWindow uiWindow(&engine);
 
     return app.exec();
 }

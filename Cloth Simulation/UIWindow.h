@@ -8,7 +8,6 @@
 #include "Rendering/Engine.h"
 #include "QWindow"
 #include "MediaWidget.h"
-#include "PoseWidget.h"
 
 
 class UIWindow : public QWidget
@@ -30,13 +29,10 @@ public:
 	    this->setLayout(layout);
 	    layout->setMargin(0);
 
-
         // add play/pause button
         media = new MediaWidget(this, engine);
         layout->addWidget(media);
 
-        PoseWidget *poseWidget = new PoseWidget(this, engine);
-        layout->addWidget(poseWidget);
     }
 
 

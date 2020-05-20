@@ -7,6 +7,7 @@
 #include "../Video.h"
 #include <QThread>
 #include <QOpenGLShaderProgram>
+#include <fstream>
 
 Engine::Engine(QWidget *parent) : QOpenGLWidget(parent), camera({5, 4, 20}), massSpring(50, 50, 0.3f) {
     setWindowTitle("Animation Viewer");
@@ -21,10 +22,23 @@ void Engine::initializeGL() {
 
     glEnable(GL_DEPTH_TEST); // enable z-buffering
     // set lighting parameters
-//    glShadeModel(GL_FLAT);
+    glShadeModel(GL_SMOOTH);
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL); // enable colour
+
+    // enable lighting
+    glEnable(GL_NORMALIZE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glColorMaterial(GL_FRONT, GL_SPECULAR);
+
+    GLfloat light_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat light_diffuse[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+    GLfloat light_specular[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 
     // set background colour to purple
     glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
@@ -49,32 +63,26 @@ void Engine::loop() {
     // get time from previous frame
     GLfloat frame_time = elapsed_timer.nsecsElapsed() * 0.000000001;
     elapsed_timer.restart();
-    delta_accumulator += frame_time;
 
     camera.update();
 
     if(is_playing) {
+        delta_accumulator += frame_time;
 
         // integrate in steps
         while (delta_accumulator >= DELTA_TIME) {
-            massSpring.update(DELTA_TIME, 1.0f);
+            massSpring.update(DELTA_TIME);
 
             delta_accumulator -= DELTA_TIME;
         }
 
         // catch remainder in accumulator and integrate
         if(delta_accumulator >= 0.0f) {
-            massSpring.update(delta_accumulator, 1.0f);
+            massSpring.update(delta_accumulator);
 
             delta_accumulator = 0.0f;
         }
-
     }
-
-	// if ((int) frame != prev_frame) {
-	// 	prev_frame = frame;
-	// 	Video::create_ppm("tmp", frame, window_size.x, window_size.y, 255, 4, pixels);
-	// }
 
 
     if(input.keyboard.KEY_W)
@@ -88,6 +96,13 @@ void Engine::loop() {
 
     // call window/opengl to update
     update();
+
+    if((1000/FPS) - elapsed_timer.elapsed() >= 0) {
+        timer.stop();
+        timer.start((1000 / (int) FPS) - elapsed_timer.elapsed());
+    }
+
+    frame++;
 }
 
 void Engine::resizeGL(int w, int h) {
@@ -103,43 +118,41 @@ void Engine::resizeGL(int w, int h) {
 
 	window_size = { w, h };
 
-	pixels = static_cast<GLubyte*>(malloc(4 * window_size.x * window_size.y));
+//	pixels = static_cast<GLubyte*>(malloc(4 * window_size.x * window_size.y));
 }
 
 void Engine::paintGL() {
     // clear the buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // enable lighting
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glColorMaterial(GL_FRONT, GL_SPECULAR);
+
 
     // set model view matrix
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+
     glMultMatrixf(&camera.getView()[0][0]);
+
+    glPushMatrix();
 
     /*
      * Draw objects
      */
 
-    sphere.render();
+    if (show_ball)
+        sphere.render();
 
+    massSpring.render(show_faces, show_springs, show_points);
 
-    massSpring.render();
+    glPopMatrix();
 
+    GLfloat light_position[] = {5.0f, 4.0f, 100.0f, 0.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    GLfloat lightPos[] = {5.0f, 4.0f, 20.0f};
-    GLfloat lightColor[] = {1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightColor);
-
-
-	glReadPixels(0, 0, window_size.x, window_size.y, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    if (is_recording) {
+        frame_caps.push_back(static_cast<GLubyte *>(malloc(4 * window_size.x * window_size.y)));
+        glReadPixels(0, 0, window_size.x, window_size.y, GL_RGBA, GL_UNSIGNED_BYTE, frame_caps.back());
+    }
 }
 
 void Engine::keyPressEvent(QKeyEvent *event) {
@@ -200,37 +213,75 @@ void Engine::mousePressEvent(QMouseEvent *event) {
     last_m_pos = event->pos(); // clear mouse position upon click
 }
 
-Eigen::Vector3f Engine::getTargetPosition() {
-    glm::vec3 position = target_position * glm::vec4(0, 0, 0, 1.0f);
-    return {position.x, position.y, position.z};
-}
-
 void Engine::togglePlay() {
     this->is_playing = !this->is_playing;
 
-    if(isEditing() && isPlaying())
-        toggleEdit();
-
     emit playChanged(isPlaying());
+}
+
+void Engine::toggleRecord() {
+    if(this->is_recording)
+        stopRecording();
+    else
+        startRecording();
+
+    emit recordChanged(isRecording());
 }
 
 bool Engine::isPlaying() {
     return this->is_playing;
 }
 
-void Engine::toggleEdit() {
-    this->is_editing = !this->is_editing;
-
-    if(isEditing() && isPlaying())
-        togglePlay();
-
-    emit editChanged(isEditing());
+bool Engine::isRecording() {
+    return this->is_recording;
 }
 
-bool Engine::isEditing() {
-    return this->is_editing;
+void Engine::toggleFaces() {
+    show_faces = !show_faces;
+
+    emit facesChanged(show_faces);
 }
 
-void Engine::setFrame(int frame) {
-    this->frame = frame;
+void Engine::toggleSprings() {
+    show_springs = !show_springs;
+
+    emit springsChanged(show_springs);
+}
+
+void Engine::togglePoints() {
+    show_points = !show_points;
+
+    emit pointsChanged(show_points);
+}
+
+void Engine::startRecording() {
+    // clear buffer
+    for(auto *pixels: frame_caps) {
+        free(pixels);
+    }
+    frame_caps.clear(); // clear vector
+
+    is_recording = true;
+}
+
+void Engine::stopRecording() {
+    is_recording = false;
+
+    outputImages();
+}
+
+void Engine::outputImages() {
+    std::filesystem::remove_all("video"); // cleanup video folder
+    std::filesystem::create_directory("video"); // create new video folder
+
+    int i = 0;
+    for(auto *pixels : this->frame_caps) {
+        Video::create_ppm("video/tmp", i, window_size.x, window_size.y, 255, 4, pixels);
+        i++;
+    }
+
+    // create file with ffmpeg command to render video
+    std::ofstream file("video/render.sh");
+    file << "ffmpeg -framerate " << FPS <<" -i \"tmp%d.ppm\" output.mp4";
+    file.close();
 }

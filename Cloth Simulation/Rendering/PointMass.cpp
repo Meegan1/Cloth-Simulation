@@ -26,29 +26,30 @@ void PointMass::addSpring(Spring *spring) {
 }
 
 
-void PointMass::updateAcceleration(float scale) {
-    glm::vec3 gravity = glm::vec3(0, -9.8f, 0) * mass;
+glm::vec3 PointMass::calculateAcceleration() {
+    // create initial acceleration
+    glm::vec3 acceleration = glm::vec3(0.0f);
 
-    acceleration = glm::vec3(0.0f);
-    acceleration += gravity;
+    // add gravity
+    acceleration += glm::vec3(0, -9.8f, 0) * mass;
 //    acceleration += glm::vec3(10.0f, 0.0f, 0.0f);
 
+    // calculate forces from attached springs
     for(auto &spring : springs) {
-        acceleration += spring->getForce(this, scale);
+        acceleration += spring->getForce(this);
     }
 
+    // divide by mass to get resulting force
     acceleration /= mass;
+    return acceleration;
 }
 
-void PointMass::update(float dt, float scale) {
-    if(is_fixed)
+void PointMass::update(float dt) {
+    if(is_fixed) // don't update if fixed
         return;
 
-    updateAcceleration(scale);
-
-    velocity = velocity + acceleration * dt;
-
-    position = position + velocity * dt;
+    velocity = velocity + calculateAcceleration() * dt; // calculate velocity
+    position = position + velocity * dt; // calculate new position
 }
 
 void PointMass::render() {

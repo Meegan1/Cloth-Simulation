@@ -45,12 +45,12 @@ public:
     void addBall(Ball* ball);
     void addFace(PointMass *v0, PointMass *v1, PointMass *v2);
 
-    void update(float dt, float scale);
-    void render();
+    void update(float dt);
+    void render(bool showFaces, bool showSprings, bool showPoints);
 
     std::vector<std::shared_ptr<Spring>> springs;
     std::vector<std::shared_ptr<PointMass>> points;
-    std::vector<std::shared_ptr<Ball>> balls;
+    std::vector<Ball*> balls;
     unsigned long width, height;
     std::vector<PointMass*> faces;
 };

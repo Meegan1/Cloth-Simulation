@@ -20,7 +20,6 @@ public:
     typedef std::shared_ptr<CGObject> CGObject_Ptr;
 public:
     CGObject();
-    virtual ~CGObject();
 
 public:
     virtual int init(std::string file, float scaleCo = 1.0f);
@@ -34,8 +33,6 @@ public:
     void switchShowWire() { m_showWire = !m_showWire; }
     void switchShowTexture() { m_showTexture = !m_showTexture; }
     void switchShowColor() { m_showColor = !m_showColor; }
-
-    QOpenGLVertexArrayObject& getVAO() { return m_vao; }
 
     int scale(float scale = 1);
 
@@ -62,10 +59,6 @@ protected:
     bool m_showTexture = false;
     bool m_showColor = true;
     bool m_showNormals = false;
-
-    QOpenGLBuffer m_vbo;
-
-    QOpenGLVertexArrayObject m_vao;
 
 
     std::vector<float> m_buffer;

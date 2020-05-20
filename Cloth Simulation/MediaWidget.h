@@ -16,40 +16,55 @@ class MediaWidget : public QWidget {
 Q_OBJECT
     Engine *engine;
     QPushButton *play;
-    QPushButton *edit;
+    QPushButton *record;
     QPushButton *save;
     QPushButton *load;
-    QSlider *slider;
+    QPushButton *faces;
+    QPushButton *springs;
+    QPushButton *points;
+    QPushButton *scenario;
 public:
     MediaWidget(QWidget *parent, Engine *engine) : QWidget(parent), engine(engine) {
         play = new QPushButton("Pause", this);
-        edit = new QPushButton("Edit Joint", this);
+        record = new QPushButton("Record", this);
         save = new QPushButton("Save", this);
         load = new QPushButton("Load", this);
-        slider = new QSlider(Qt::Horizontal, this);
-        slider->setRange(0, 99);
+        
+        faces = new QPushButton("Hide Faces", this);
+        springs = new QPushButton("Show Springs", this);
+        points = new QPushButton("Show Points", this);
 
+        scenario = new QPushButton("Load Scenario 2", this);
 
         connect(engine, SIGNAL(playChanged(bool)), this, SLOT(updatePlayButton(bool)));
-        connect(engine, SIGNAL(editChanged(bool)), this, SLOT(updateEditButton(bool)));
-        connect(engine, SIGNAL(frameChanged(int)), this, SLOT(timeChanged(int)));
+        connect(engine, SIGNAL(recordChanged(bool)), this, SLOT(updateRecordButton(bool)));
+        connect(engine, SIGNAL(facesChanged(bool)), this, SLOT(toggleFaces(bool)));
+        connect(engine, SIGNAL(springsChanged(bool)), this, SLOT(toggleSprings(bool)));
+        connect(engine, SIGNAL(pointsChanged(bool)), this, SLOT(togglePoints(bool)));
+        connect(engine, SIGNAL(scenarioChanged(int)), this, SLOT(setScenario(int)));
 
         connect(play, SIGNAL(released()), this, SLOT(playPressed()));
-        connect(edit, SIGNAL(released()), this, SLOT(editPressed()));
+        connect(record, SIGNAL(released()), this, SLOT(recordPressed()));
         connect(save, SIGNAL(released()), this, SLOT(savePressed()));
         connect(load, SIGNAL(released()), this, SLOT(loadPressed()));
-        connect(slider, SIGNAL(valueChanged(int)), this, SLOT(valueChanged(int)));
+        connect(faces, SIGNAL(released()), this, SLOT(facesPressed()));
+        connect(springs, SIGNAL(released()), this, SLOT(springsPressed()));
+        connect(points, SIGNAL(released()), this, SLOT(pointsPressed()));
+        connect(scenario, SIGNAL(released()), this, SLOT(scenarioPressed()));
 
         // create layout
         QBoxLayout *layout = new QVBoxLayout();
         this->setLayout(layout);
         layout->setMargin(0);
 
-        layout->addWidget(edit);
         layout->addWidget(play);
+        layout->addWidget(record);
         layout->addWidget(save);
         layout->addWidget(load);
-        layout->addWidget(slider);
+        layout->addWidget(faces);
+        layout->addWidget(springs);
+        layout->addWidget(points);
+        layout->addWidget(scenario);
     }
 
 private slots:
@@ -57,8 +72,8 @@ private slots:
         engine->togglePlay();
     }
 
-    void editPressed() {
-        engine->toggleEdit();
+    void recordPressed() {
+        engine->toggleRecord();
     }
 
     void savePressed() {
@@ -77,11 +92,11 @@ private slots:
             play->setText("Pause");
     }
 
-    void updateEditButton(bool isEditing) {
-        if(!isEditing)
-            edit->setText("Edit Joint");
+    void updateRecordButton(bool isRecording) {
+        if(!isRecording)
+            record->setText("Record");
         else
-            edit->setText("Stop Editing Joint");
+            record->setText("Stop Recording");
     }
 
     void loadPressed() {
@@ -90,13 +105,49 @@ private slots:
         if(dialog.exec()) {
         }
     }
-
-    void timeChanged(int value) {
-        const QSignalBlocker blocker(slider); // block valueChanged from being triggered
-        slider->setValue(value);
+    
+    void facesPressed() {
+        engine->toggleFaces();
+    }
+    
+    void springsPressed() {
+        engine->toggleSprings();
+    }
+    
+    void pointsPressed() {
+        engine->togglePoints();
+    }
+    
+    void toggleFaces(bool showFaces) {
+        if(showFaces)
+            faces->setText("Hide Faces");
+        else
+            faces->setText("Show Faces");
+    }
+    
+    void toggleSprings(bool showSprings) {
+        if(showSprings)
+            springs->setText("Hide Springs");
+        else
+            springs->setText("Show Springs");
     }
 
-    void valueChanged(int value) {
+    void togglePoints(bool showPoints) {
+        if(showPoints)
+            points->setText("Hide Points");
+        else
+            points->setText("Show Points");
+    }
+
+    void scenarioPressed() {
+        engine->toggleScenario();
+    }
+
+    void setScenario(int scenario) {
+        if(scenario == 1)
+            this->scenario->setText("Load Scenario 2");
+        else
+            this->scenario->setText("Load Scenario 1");
     }
 };
 #endif //ASSIGNMENT_1_MEDIAWIDGET_H

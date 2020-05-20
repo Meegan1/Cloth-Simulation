@@ -24,15 +24,15 @@ public:
 
     void addSpring(Spring *spring);
 
-    void updateAcceleration(float scale);
+    glm::vec3 calculateAcceleration();
 
-    void update(float dt, float scale);
+    void update(float dt);
 
     void render();
 
     glm::vec3 velocity{0};
     glm::vec3 acceleration{0};
-    bool is_fixed;
+    bool is_fixed{false};
 
     float mass;
 

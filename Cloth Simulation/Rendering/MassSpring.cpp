@@ -56,9 +56,9 @@ std::shared_ptr<PointMass> MassSpring::addPoint(const PointMass &point) {
     return points.back();
 }
 
-void MassSpring::update(float dt, float scale) {
+void MassSpring::update(float dt) {
     for(auto &point : points) {
-        point->update(dt, scale);
+        point->update(dt);
 
         // resolve ball collision
         for(auto &ball : balls) {
@@ -72,29 +72,40 @@ void MassSpring::update(float dt, float scale) {
     }
 }
 
-void MassSpring::render() {
-    for(auto &spring : springs) {
-        spring->render();
+void MassSpring::render(bool showFaces, bool showSprings, bool showPoints) {
+    if(showSprings) {
+        for (auto &spring : springs) {
+            spring->render();
+        }
     }
 
-    for(auto &point : points) {
-        point->render();
+    if(showPoints) {
+        for (auto &point : points) {
+            point->render();
+        }
     }
 
-    glPushAttrib(GL_COLOR);
-        glBegin(GL_TRIANGLES);
-            float color[] = {0.0f, 0.0f, 1.0f};
-            float specular[] = {1.0f, 1.0f, 1.0f};
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-            for(unsigned long face = 0; face < faces.size() / 3; face++) {
-//                glNormal3f(1.0f, 1.0f, -1.0f);
-                glVertex3fv(&(faces[face * 3]->position.x));
-                glVertex3fv(&(faces[face * 3 + 1]->position.x));
-                glVertex3fv(&(faces[face * 3 + 2]->position.x));
-            }
-        glEnd();
-    glPopAttrib();
+    if(showFaces) {
+        glPushMatrix();
+            glPushAttrib(GL_LIGHTING_BIT);
+                glBegin(GL_TRIANGLES);
+                    float color[] = {0.0f, 0.0f, 0.6f, 1.0f};
+                    float specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
+                    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+                    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+                    for (unsigned long face = 0; face < faces.size() / 3; face++) {
+                        glm::vec3 A = faces[face * 3 + 1]->position - faces[face * 3]->position;
+                        glm::vec3 B = faces[face * 3 + 2]->position - faces[face * 3]->position;
+                        glm::vec3 normal = glm::cross(B, A);
+                        glNormal3fv(&normal.x);
+                        glVertex3fv(&(faces[face * 3]->position.x));
+                        glVertex3fv(&(faces[face * 3 + 1]->position.x));
+                        glVertex3fv(&(faces[face * 3 + 2]->position.x));
+                    }
+                glEnd();
+            glPopAttrib();
+        glPopMatrix();
+    }
 }
 
 void MassSpring::addBall(Ball *ball) {

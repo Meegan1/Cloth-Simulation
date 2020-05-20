@@ -7,16 +7,8 @@
 using namespace std;
 
 CGObject::CGObject()
-	:m_vbo(QOpenGLBuffer::VertexBuffer)
 {
 
-}
-
-
-CGObject::~CGObject()
-{
-	m_vbo.destroy();
-	m_vao.destroy();
 }
 
 int CGObject::init(std::string file, float scaleCo)
@@ -37,8 +29,6 @@ int CGObject::init(std::string file, float scaleCo)
 
 	if (initBuffer() != 0)
 		return -4;
-
-//    diredge_mesh = diredge::createMesh(m_vertices, m_triangles, m_vertNormals);
 
 	return 0;
 }
@@ -79,11 +69,6 @@ int CGObject::computeVertexColors()
 
 	for (int i = 0; i < m_colors.size(); ++i)
 	{
-		//m_colors[i].x = ((float)rand() / (RAND_MAX));
-		//m_colors[i].y = ((float)rand() / (RAND_MAX));
-		//m_colors[i].z = ((float)rand() / (RAND_MAX));
-
-		//m_colors[i] /= m_colors[i].length();
 		m_colors[i].r = 0;
 		m_colors[i].g = 1;
 		m_colors[i].b = 0;
@@ -172,46 +157,30 @@ int CGObject::initBuffer()
 			m_buffer[i*m_unitSize * 3 + offset++] = m_vertTexCoords[v3].y;
 		}
 	}
-
-
-	m_vao.create();
-	assert(m_vao.isCreated());
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
-	
-	m_vbo.create();
-	m_vbo.bind();
-	m_vbo.allocate(&m_buffer[0], m_buffer.size() * sizeof(float));
-
-
-	
-	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
-	f->glEnableVertexAttribArray(0);
-	f->glEnableVertexAttribArray(1);
-	if (m_showColor)
-		f->glEnableVertexAttribArray(2);
-	if (m_showTexture)
-		f->glEnableVertexAttribArray(3);
-
-	f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_unitSize * sizeof(float), reinterpret_cast<void*>(0));
-	f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, m_unitSize * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-
-	if (m_showColor)
-		f->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, m_unitSize * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
-	if (m_showTexture)
-		f->glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, m_unitSize * sizeof(float), reinterpret_cast<void*>(9 * sizeof(float)));
-	m_vbo.release();
-
 	return 0;
 }
 int CGObject::render()
 {
-
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
-
 	if(!m_showWire) {
-        glDrawArrays(GL_TRIANGLES, 0, m_triangles.size()*3);
-        GLenum err = glGetError();
-        assert(err == GL_NO_ERROR);
+        glPushAttrib(GL_LIGHTING_BIT);
+            float color[] = {0.8f, 0.0f, 0.0f, 1.0f};
+            float specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+
+
+            glBegin(GL_TRIANGLES);
+            for (auto &triangle : m_triangles)
+            {
+                glNormal3fv(&m_vertNormals[triangle.x].x);
+                glVertex3fv(&m_vertices[triangle.x].x);
+                glNormal3fv(&m_vertNormals[triangle.y].x);
+                glVertex3fv(&m_vertices[triangle.y].x);
+                glNormal3fv(&m_vertNormals[triangle.z].x);
+                glVertex3fv(&m_vertices[triangle.z].x);
+            }
+            glEnd();
+        glPopAttrib();
     } else {
 	    glBegin(GL_LINES);
 	    for(int i = 0; i < m_triangles.size(); i++) {
