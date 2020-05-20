@@ -8,3 +8,8 @@ Usage:
 Recording:
     Recording can be done by clicking record, the frames are then outputted into the video folder, along with the ffmpeg command needed to 
     render the frames into a video.
+
+    
+Controls:
+    WASD - camera movement
+    Left Click - rotate camera
